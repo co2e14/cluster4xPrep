@@ -5,11 +5,12 @@ import glob
 from pathlib import Path
 from shutil import copyfile as cp
 from distutils.dir_util import copy_tree
-
+from multiprocessing import Pool
 
 class c4xp:
     def __init__(self, directory):
         self.cwd = os.getcwd()
+        self.cpus = os.cpu_count()
         self.l = [x[0] for x in os.walk(directory)]
 
     def folderfindandcopy(self, foldername, tocopy):
@@ -50,12 +51,7 @@ class c4xp:
                     if f.endswith(".HKL"):
                         os.chdir(x)
                         os.rename(f, "HKLIN.HKL")
-                        #os.system(str('pointless HKLOUT pointless.mtz HKLIN HKLIN.HKL >/dev/null 2>&1'))
-                        #os.system(str('aimless HKLIN pointless.mtz HKLOUT scaled.mtz --no-input >/dev/null 2>&1'))
-                        #os.system(str('molrep -f scaled.mtz -m modelin.pdb >/dev/null 2>&1'))
-                        #s.system(str('dimple --anode -s scaled.mtz modelin.pdb ./ >/dev/null 2>&1'))
                         os.chdir(self.cwd)
-                        #print("Completed " + str(folder_num) + " out of " + str(len(self.torun)))
                     else:
                         pass
             else:
