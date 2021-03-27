@@ -11,6 +11,7 @@ from multiprocessing import Pool
 class c4xp:
     def __init__(self, directory):
         self.cwd = os.getcwd()
+        self.cpus = os.cpu_count()
         self.l = [x[0] for x in os.walk(directory)]
 
     def folderfindandcopy(self, foldername, tocopy):
