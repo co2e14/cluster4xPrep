@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 import os
 import time
 import glob
@@ -20,7 +20,7 @@ class c4xp:
         for x in self.l:
             if str(foldername) in x:
                 self.m += [x]
-        
+
         for y in self.m:
             folder_num += 1
             copyto = str(os.path.join(self.cwd, ("c4x_" + str(folder_num))))
@@ -30,6 +30,8 @@ class c4xp:
                     sourcefile = os.path.join(y, x)
                     destfile = os.path.join(copyto, x)
                     cp(sourcefile, destfile)
+                    with open("filelist.txt", "a") as filelist:
+                        filelist.write("\nc4x_" + str(folder_num) + " = " + str(y))
                 else:
                     pass
             print("Copied ", str(folder_num), " out of ", str(len(self.m)), end="\r")
@@ -45,7 +47,9 @@ class c4xp:
         self.torun = [x for x in self.torun if "c4x_" in x]
         for x in self.torun:
             folder_num += 1
-            copyto = str(os.path.join(self.cwd, ("c4x_" + str(folder_num)), "modelin.pdb"))
+            copyto = str(
+                os.path.join(self.cwd, ("c4x_" + str(folder_num)), "modelin.pdb")
+            )
             cp(self.model, copyto)
             if "c4x_" in x:
                 filelist = os.listdir(x)
@@ -59,32 +63,41 @@ class c4xp:
             else:
                 pass
         torun = self.torun
+        print("\nModels copied, starting poinless runs")
         return torun
 
     def pointless(self, dir):
         os.chdir(dir)
-        os.system(str('pointless HKLOUT pointless.mtz HKLIN HKLIN.HKL >/dev/null 2>&1'))
+        os.system(str("pointless HKLOUT pointless.mtz HKLIN HKLIN.HKL >/dev/null 2>&1"))
 
     def aimless(self, dir):
         os.chdir(dir)
-        os.system(str('aimless HKLIN pointless.mtz HKLOUT scaled.mtz --no-input >/dev/null 2>&1'))
+        os.system(
+            str(
+                "aimless HKLIN pointless.mtz HKLOUT scaled.mtz --no-input >/dev/null 2>&1"
+            )
+        )
 
     def dimple(self, dir):
         os.chdir(dir)
-        os.system(str('dimple --anode -s scaled.mtz modelin.pdb ./ >/dev/null 2>&1'))
+        os.system(str("dimple --anode -s scaled.mtz modelin.pdb ./ >/dev/null 2>&1"))
 
 
 if __name__ == "__main__":
     pool = Pool(os.cpu_count() - 1)
     print("Using ", str(os.cpu_count() - 1), "CPU cores")
-    rundimp = "m" #str(input("Do you want to run dimple from an mtz/sca/HKL or use autoprocessed dimple runs? (m/a) ")).lower()
+    rundimp = str(
+        input(
+            "Do you want to run dimple from an mtz/sca/HKL or use autoprocessed dimple runs? (m/a) "
+        )
+    ).lower()
     if rundimp is "a":
-        searchpath = "/dls/i23/data/2021/mx22563-22/processed/L247_WT_old/20210223" #str(input("Path to processed dimple runs: "))
+        searchpath = str(input("Path to processed dimple runs: "))
         searchterm = str("dimple")
         tocopy = ("final.pdb", "final.mtz", "anode.lsa", "anode.pha")
     if rundimp == "m":
         os.system("module load ccp4")
-        searchpath = "/dls/i23/data/2021/mx22563-22/processed/L247_WT_old/20210223" #str(input("Path to processed xia2-3dii runs: "))
+        searchpath = str(input("Path to processed xia2-3dii runs: "))
         modelin = str(input("Model in: "))
         searchterm = str("xia2-3dii/DataFiles")
         tocopy = str("CORRECT.HKL")
@@ -93,5 +106,8 @@ if __name__ == "__main__":
     if rundimp == "m":
         torun = cluster4xPrep.HKL_PDB(modelin)
         pool.map(cluster4xPrep.pointless, torun)
+        print("Pointless runs finished, starting aimless runs", end="\r")
         pool.map(cluster4xPrep.aimless, torun)
+        print("Aimless runs finished, starting dimple runs   ", end="\r")
         pool.map(cluster4xPrep.dimple, torun)
+        print("Dimple finished. All done!                    ", end="\r")
